@@ -62,5 +62,26 @@ public class StreamAppTest {
         assertEquals(expectdSize, size);
         assertEquals(expectedAverage, average);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMinError() {
+        System.out.println("minError");
+        IntStream emptyStream = new AsIntStream();
+        emptyStream.min();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxError() {
+        System.out.println("maxError");
+        IntStream emptyStream = new AsIntStream();
+        emptyStream.max();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSumError() {
+        System.out.println("sumError");
+        IntStream emptyStream = new AsIntStream();
+        emptyStream.sum();
+    }
     
 }

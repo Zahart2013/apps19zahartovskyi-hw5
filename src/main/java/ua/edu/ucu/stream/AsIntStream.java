@@ -65,6 +65,9 @@ public class AsIntStream implements IntStream {
     @Override
     public long count() {
         long counter = 0;
+        if(stream == null) {
+            return counter;
+        }
         while (stream.hasNext()) {
             stream.next();
             counter++;
