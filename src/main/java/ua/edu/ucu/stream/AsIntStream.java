@@ -3,9 +3,10 @@ package ua.edu.ucu.stream;
 import ua.edu.ucu.function.*;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class AsIntStream implements IntStream {
-    protected Iterator<Integer> stream;
+    private Iterator<Integer> stream;
 
     public AsIntStream() {
     }
@@ -64,8 +65,8 @@ public class AsIntStream implements IntStream {
     @Override
     public long count() {
         long counter = 0;
-        Iterable<Integer> iter = () -> stream;
-        for (Integer i : iter) {
+        while (stream.hasNext()) {
+            stream.next();
             counter++;
         }
         return counter;
@@ -86,9 +87,9 @@ public class AsIntStream implements IntStream {
 
     @Override
     public IntStream filter(IntPredicate predicate) {
-        AsIntStream new_stream = new AsIntStream();
-        new_stream.stream = new StreamFilter(stream, predicate);
-        return new_stream;
+        AsIntStream newStream = new AsIntStream();
+        newStream.setStream(new StreamFilter(stream, predicate));
+        return newStream;
     }
 
     @Override
@@ -101,25 +102,26 @@ public class AsIntStream implements IntStream {
 
     @Override
     public IntStream map(IntUnaryOperator mapper) {
-        AsIntStream new_stream = new AsIntStream();
-        new_stream.stream = new StreamMap(stream, mapper);
-        return new_stream;
+        AsIntStream newStream = new AsIntStream();
+        newStream.setStream(new StreamMap(stream, mapper));
+        return newStream;
     }
 
     @Override
     public IntStream flatMap(IntToIntStreamFunction func) {
-        AsIntStream new_stream = new AsIntStream();
-        new_stream.stream = new StreamFlatMap(stream, func);
-        return new_stream;
+        AsIntStream newStream = new AsIntStream();
+        newStream.setStream(new StreamFlatMap(stream, func));
+        return newStream;
     }
 
     @Override
     public int reduce(int identity, IntBinaryOperator op) {
         Iterable<Integer> iter = () -> stream;
+        int result = identity;
         for (Integer i : iter) {
-            identity = op.apply(identity, i);
+            result = op.apply(result, i);
         }
-        return identity;
+        return result;
     }
 
     @Override
@@ -134,6 +136,14 @@ public class AsIntStream implements IntStream {
         return result;
     }
 
+    protected Iterator<Integer> getStream() {
+        return stream;
+    }
+
+    protected void setStream(Iterator<Integer> stream) {
+        this.stream = stream;
+    }
+
     private static class StreamIter implements Iterator<Integer> {
         private Integer[] ints;
         private int index;
@@ -145,14 +155,18 @@ public class AsIntStream implements IntStream {
 
         @Override
         public boolean hasNext() {
-            if (index < ints.length)
+            if (index < ints.length) {
                 return true;
+            }
             reset();
             return false;
         }
 
         @Override
         public Integer next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
             Integer next = ints[index];
             index += 1;
             return next;
@@ -194,7 +208,8 @@ public class AsIntStream implements IntStream {
         private Iterator<Integer> iter;
         private IntUnaryOperator operator;
 
-        private StreamMap(Iterator<Integer> iter, IntUnaryOperator operator) {
+        private StreamMap(Iterator<Integer> iter,
+                          IntUnaryOperator operator) {
             this.iter = iter;
             this.operator = operator;
         }
@@ -215,7 +230,8 @@ public class AsIntStream implements IntStream {
         private IntToIntStreamFunction operator;
         private AsIntStream currentStream;
 
-        private StreamFlatMap(Iterator<Integer> iter, IntToIntStreamFunction operator) {
+        private StreamFlatMap(Iterator<Integer> iter,
+                              IntToIntStreamFunction operator) {
             this.iter = iter;
             this.operator = operator;
         }
@@ -223,7 +239,8 @@ public class AsIntStream implements IntStream {
 
         @Override
         public boolean hasNext() {
-            if (currentStream == null || !currentStream.stream.hasNext()) {
+            if (currentStream == null
+                    || !currentStream.getStream().hasNext()) {
                 currentStream = null;
                 return iter.hasNext();
             }
@@ -233,9 +250,10 @@ public class AsIntStream implements IntStream {
         @Override
         public Integer next() {
             if (currentStream == null) {
-                currentStream = (AsIntStream) operator.applyAsIntStream(iter.next());
+                currentStream =
+                        (AsIntStream) operator.applyAsIntStream(iter.next());
             }
-            return currentStream.stream.next();
+            return currentStream.getStream().next();
         }
 
 
