@@ -33,16 +33,7 @@ public class AsIntStream implements IntStream {
         if (this.count() == 0) {
             throw new IllegalArgumentException("Empty array.");
         }
-        Iterable<Integer> iter = () -> stream;
-        Integer max = null;
-        for (Integer i : iter) {
-            if (max == null) {
-                max = i;
-            } else if (max < i) {
-                max = i;
-            }
-        }
-        return max;
+        return this.reduce(stream.next(), Math::max);
     }
 
     @Override
@@ -50,22 +41,13 @@ public class AsIntStream implements IntStream {
         if (this.count() == 0) {
             throw new IllegalArgumentException("Empty array.");
         }
-        Iterable<Integer> iter = () -> stream;
-        Integer min = null;
-        for (Integer i : iter) {
-            if (min == null) {
-                min = i;
-            } else if (min > i) {
-                min = i;
-            }
-        }
-        return min;
+        return this.reduce(stream.next(), Math::min);
     }
 
     @Override
     public long count() {
         long counter = 0;
-        if(stream == null) {
+        if (stream == null) {
             return counter;
         }
         while (stream.hasNext()) {
